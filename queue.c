@@ -17,15 +17,29 @@
  */
 struct list_head *q_new()
 {
-    struct list_head *head;
-    head = (struct list_head *) malloc(sizeof(struct list_head));
+    struct list_head *head =
+        (struct list_head *) malloc(sizeof(struct list_head));
     INIT_LIST_HEAD(head);
     return head;
-    // return NULL;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    struct list_head *tmp = l->next;
+    // element_t *del_el;
+    while (tmp != l) {
+        // tmp = tmp->next;
+        element_t *del_el;
+        del_el = container_of(tmp, element_t, list);
+        tmp = tmp->next;
+        free(del_el->value);
+        free(del_el);
+    }
+    free(tmp);
+    INIT_LIST_HEAD(l);
+    return;
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -36,7 +50,16 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    return true;
+    element_t *new_el = (element_t *) malloc(sizeof(element_t));
+    if (new_el) {
+        // int length = strlen(s);
+        new_el->value = (char *) malloc(strlen(s) + 1);
+        strncpy(new_el->value, s, strlen(s) + 1);
+        // *(new_el->value + strlen(s)) = '\0';
+        list_add(&new_el->list, head);
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -48,7 +71,16 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    return true;
+    element_t *new_el = (element_t *) malloc(sizeof(element_t));
+    if (new_el) {
+        // int length = strlen(s);
+        new_el->value = (char *) malloc(strlen(s) + 1);
+        strncpy(new_el->value, s, strlen(s) + 1);
+        // *(new_el->value + strlen(s)) = '\0';
+        list_add_tail(&new_el->list, head);
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -67,6 +99,10 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
+    // element_t* del_el;
+    if (head->next == head) {
+        return NULL;
+    }
     return NULL;
 }
 
