@@ -29,17 +29,17 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
-    if (!l)
-        return;
-    struct list_head *tmp = l->next;
-    while (tmp != l) {
-        element_t *del_el;
-        del_el = container_of(tmp, element_t, list);
-        tmp = tmp->next;
-        free(del_el->value);
-        free(del_el);
+    if (l) {
+        struct list_head *tmp = l->next;
+        while (tmp != l) {
+            element_t *del_el;
+            del_el = container_of(tmp, element_t, list);
+            tmp = tmp->next;
+            free(del_el->value);
+            free(del_el);
+        }
+        free(l);
     }
-    free(tmp);
 }
 
 /*
@@ -112,21 +112,15 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
     if (head && !list_empty(head)) {
         element_t *rem_el = container_of(head->next, element_t, list);
-        int char_len = strlen(rem_el->value) + 1 < bufsize
-                           ? strlen(rem_el->value) + 1
-                           : bufsize;
+        int char_len = strlen(rem_el->value) < bufsize - 1
+                           ? strlen(rem_el->value)
+                           : bufsize - 1;
         if (sp) {
-            // free(sp);
-            sp = realloc(sp, char_len);
-            strncpy(sp, rem_el->value, char_len - 1);
-            *(sp + char_len - 1) = '\0';
-            list_del(&rem_el->list);
-            return rem_el;
+            sp = realloc(sp, char_len + 1);
+            strncpy(sp, rem_el->value, char_len + 1);
+            *(sp + char_len) = '\0';
         }
-        // sp = malloc(char_len);
-        // strncpy(sp, rem_el->value, char_len - 1);
-        //*(sp + char_len - 1) = '\0';
-        // list_del(&rem_el->list);
+        list_del(&rem_el->list);
         return rem_el;
     }
     return NULL;
@@ -140,16 +134,15 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
     if (head && !list_empty(head)) {
         element_t *rem_el = container_of(head->prev, element_t, list);
-        int char_len = strlen(rem_el->value) + 1 < bufsize
-                           ? strlen(rem_el->value) + 1
-                           : bufsize;
+        int char_len = strlen(rem_el->value) < bufsize - 1
+                           ? strlen(rem_el->value)
+                           : bufsize - 1;
         if (sp) {
-            sp = realloc(sp, char_len);
-            strncpy(sp, rem_el->value, char_len - 1);
-            *(sp + char_len - 1) = '\0';
-            list_del(&rem_el->list);
-            return rem_el;
+            sp = realloc(sp, char_len + 1);
+            strncpy(sp, rem_el->value, char_len + 1);
+            *(sp + char_len) = '\0';
         }
+        list_del(&rem_el->list);
         return rem_el;
     }
     return NULL;
@@ -171,15 +164,15 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
-    int i = 0;
-    if (!list_empty(head) && head) {
-        struct list_head *tmp = head->next;
-        while (tmp != head) {
-            i++;
-            tmp = tmp->next;
-        }
-    }
-    return i;
+    if (!head)
+        return 0;
+
+    int len = 0;
+    struct list_head *li;
+
+    list_for_each (li, head)
+        len++;
+    return len;
 }
 
 /*
@@ -223,18 +216,30 @@ bool q_delete_dup(struct list_head *head)
     if (head && !list_empty(head) && !list_is_singular(head)) {
         struct list_head *tmp1 = head->next;
         struct list_head *tmp2 = tmp1->next;
+        struct list_head *tmp = NULL;
         while (tmp1 != head) {
             element_t *del_el_1 = container_of(tmp1, element_t, list);
             element_t *del_el_2 = container_of(tmp2, element_t, list);
             while (!strcmp(del_el_1->value, del_el_2->value)) {
+                tmp = tmp1;
+                printf("%s, %s\n", del_el_1->value, del_el_2->value);
                 list_del(tmp2);
+                tmp2 = tmp1->next;
                 free(del_el_2->value);
                 free(del_el_2);
-                tmp2 = tmp1->next;
                 del_el_2 = container_of(tmp2, element_t, list);
+                if (tmp2 == head)
+                    break;
             }
             tmp1 = tmp2;
             tmp2 = tmp1->next;
+            if (tmp) {
+                element_t *del_el_3 = container_of(tmp, element_t, list);
+                list_del(tmp);
+                free(del_el_3->value);
+                free(del_el_3);
+                tmp = NULL;
+            }
         }
         return true;
     }
@@ -246,14 +251,18 @@ bool q_delete_dup(struct list_head *head)
  */
 void q_swap(struct list_head *head)
 {
-    struct list_head *first = head->next;
-    struct list_head *second = first->next;
-    for (int i = 0; i < q_size(head) / 2; i++) {
-        element_t *f_node = container_of(first, element_t, list);
-        element_t *s_node = container_of(second, element_t, list);
-        char *tmp = f_node->value;
-        f_node->value = s_node->value;
-        s_node->value = tmp;
+    if (head) {
+        struct list_head *first = head->next;
+        struct list_head *second = first->next;
+        for (int i = 0; i < q_size(head) / 2; i++) {
+            element_t *f_node = container_of(first, element_t, list);
+            element_t *s_node = container_of(second, element_t, list);
+            char *tmp = f_node->value;
+            f_node->value = s_node->value;
+            s_node->value = tmp;
+            first = first->next->next;
+            second = first->next;
+        }
     }
     // https://leetcode.com/problems/swap-nodes-in-pairs/
 }
@@ -267,16 +276,18 @@ void q_swap(struct list_head *head)
  */
 void q_reverse(struct list_head *head)
 {
-    struct list_head *fward = head->next;
-    struct list_head *bward = head->prev;
-    for (int i = 0; i < q_size(head) / 2; i++) {
-        element_t *swap_f = container_of(fward, element_t, list);
-        element_t *swap_b = container_of(bward, element_t, list);
-        char *tmp = swap_f->value;
-        swap_f->value = swap_b->value;
-        swap_b->value = tmp;
-        fward = fward->next;
-        bward = bward->prev;
+    if (head) {
+        struct list_head *fward = head->next;
+        struct list_head *bward = head->prev;
+        for (int i = 0; i < q_size(head) / 2; i++) {
+            element_t *swap_f = container_of(fward, element_t, list);
+            element_t *swap_b = container_of(bward, element_t, list);
+            char *tmp = swap_f->value;
+            swap_f->value = swap_b->value;
+            swap_b->value = tmp;
+            fward = fward->next;
+            bward = bward->prev;
+        }
     }
 }
 
@@ -287,14 +298,29 @@ void q_reverse(struct list_head *head)
  */
 void q_sort(struct list_head *head)
 {
-    /*
-    struct list_head *first = head->next;
-    struct list_head *second = first->next;
-    struct list_head *tmp = first;
-    for(int i = 0; i < q_size(head); i++){
-        first = tmp;
-        second = tmp->next;
-        while(tmp->next->next)
+    struct list_head less, greater;
+    element_t *pivot, *item, *is = NULL;
+
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    INIT_LIST_HEAD(&less);
+    INIT_LIST_HEAD(&greater);
+
+    pivot = list_first_entry(head, element_t, list);
+    list_del(&pivot->list);
+
+    list_for_each_entry_safe (item, is, head, list) {
+        if (strcmp(item->value, pivot->value) < 0)
+            list_move_tail(&item->list, &less);
+        else
+            list_move(&item->list, &greater);
     }
-    */
+
+    q_sort(&less);
+    q_sort(&greater);
+
+    list_add(&pivot->list, head);
+    list_splice(&less, head);
+    list_splice_tail(&greater, head);
 }
