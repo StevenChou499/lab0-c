@@ -17,8 +17,7 @@
  */
 struct list_head *q_new()
 {
-    struct list_head *head =
-        (struct list_head *) malloc(sizeof(struct list_head));
+    struct list_head *head = malloc(sizeof(struct list_head));
     INIT_LIST_HEAD(head);
     return head;
 }
@@ -26,10 +25,10 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
+    if (!l)
+        return;
     struct list_head *tmp = l->next;
-    // element_t *del_el;
     while (tmp != l) {
-        // tmp = tmp->next;
         element_t *del_el;
         del_el = container_of(tmp, element_t, list);
         tmp = tmp->next;
@@ -37,8 +36,6 @@ void q_free(struct list_head *l)
         free(del_el);
     }
     free(tmp);
-    INIT_LIST_HEAD(l);
-    return;
 }
 
 /*
@@ -50,12 +47,10 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    element_t *new_el = (element_t *) malloc(sizeof(element_t));
+    element_t *new_el = malloc(sizeof(element_t));
     if (new_el) {
-        // int length = strlen(s);
         new_el->value = (char *) malloc(strlen(s) + 1);
         strncpy(new_el->value, s, strlen(s) + 1);
-        // *(new_el->value + strlen(s)) = '\0';
         list_add(&new_el->list, head);
         return true;
     }
@@ -71,12 +66,10 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    element_t *new_el = (element_t *) malloc(sizeof(element_t));
+    element_t *new_el = malloc(sizeof(element_t));
     if (new_el) {
-        // int length = strlen(s);
         new_el->value = (char *) malloc(strlen(s) + 1);
         strncpy(new_el->value, s, strlen(s) + 1);
-        // *(new_el->value + strlen(s)) = '\0';
         list_add_tail(&new_el->list, head);
         return true;
     }
@@ -99,9 +92,24 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    // element_t* del_el;
-    if (head->next == head) {
-        return NULL;
+    if (head && !list_empty(head)) {
+        element_t *rem_el = container_of(head->next, element_t, list);
+        int char_len = strlen(rem_el->value) + 1 < bufsize
+                           ? strlen(rem_el->value) + 1
+                           : bufsize;
+        if (sp) {
+            // free(sp);
+            sp = realloc(sp, char_len);
+            strncpy(sp, rem_el->value, char_len - 1);
+            *(sp + char_len - 1) = '\0';
+            list_del(&rem_el->list);
+            return rem_el;
+        }
+        // sp = malloc(char_len);
+        // strncpy(sp, rem_el->value, char_len - 1);
+        //*(sp + char_len - 1) = '\0';
+        // list_del(&rem_el->list);
+        return rem_el;
     }
     return NULL;
 }
@@ -112,6 +120,25 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (head && !list_empty(head)) {
+        element_t *rem_el = container_of(head->next, element_t, list);
+        int char_len = strlen(rem_el->value) + 1 < bufsize
+                           ? strlen(rem_el->value) + 1
+                           : bufsize;
+        if (sp) {
+            // free(sp);
+            sp = realloc(sp, char_len);
+            strncpy(sp, rem_el->value, char_len - 1);
+            *(sp + char_len - 1) = '\0';
+            list_del(&rem_el->list);
+            return rem_el;
+        }
+        // sp = malloc(char_len);
+        // strncpy(sp, rem_el->value, char_len - 1);
+        //*(sp + char_len - 1) = '\0';
+        // list_del(&rem_el->list);
+        return rem_el;
+    }
     return NULL;
 }
 
@@ -131,7 +158,16 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
-    return 0;
+    int i = 0;
+    if (!list_empty(head) && head) {
+        // int i = 0;
+        struct list_head *tmp = head->next;
+        while (tmp != head) {
+            i++;
+            tmp = tmp->next;
+        }
+    }
+    return i;
 }
 
 /*
@@ -145,7 +181,16 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
-    return true;
+    if (head && !list_empty(head)) {
+        int n = q_size(head) / 2;
+        struct list_head *tmp = head;
+        for (int i = 0; i != n; i++) {
+            tmp = tmp->next;
+        }
+        list_del(tmp);
+        return true;
+    }
+    return false;
 }
 
 /*
