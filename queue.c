@@ -203,35 +203,35 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    if (head && !list_empty(head) && !list_is_singular(head)) {
-        struct list_head *tmp1 = head->next;
-        struct list_head *tmp2 = tmp1->next;
-        struct list_head *tmp = NULL;
-        while (tmp1 != head) {
-            element_t *del_el_1 = list_entry(tmp1, element_t, list);
-            element_t *del_el_2 = list_entry(tmp2, element_t, list);
-            while (!strcmp(del_el_1->value, del_el_2->value)) {
-                tmp = tmp1;
-                list_del(tmp2);
-                q_release_element(list_entry(tmp2, element_t, list));
-                tmp2 = tmp1->next;
-                del_el_2 = list_entry(tmp2, element_t, list);
-                if (tmp2 == head)
-                    break;
-            }
-            tmp1 = tmp2;
+    if (!head || !list_empty(head) || !list_is_singular(head))
+        return false;
+
+    struct list_head *tmp1 = head->next;
+    struct list_head *tmp2 = tmp1->next;
+    struct list_head *tmp = NULL;
+    while (tmp1 != head) {
+        element_t *del_el_1 = list_entry(tmp1, element_t, list);
+        element_t *del_el_2 = list_entry(tmp2, element_t, list);
+        while (!strcmp(del_el_1->value, del_el_2->value)) {
+            tmp = tmp1;
+            list_del(tmp2);
+            q_release_element(list_entry(tmp2, element_t, list));
             tmp2 = tmp1->next;
-            if (tmp != NULL) {
-                list_del(tmp);
-                q_release_element(list_entry(tmp, element_t, list));
-                tmp = NULL;
-            }
+            del_el_2 = list_entry(tmp2, element_t, list);
             if (tmp2 == head)
                 break;
         }
-        return true;
+        tmp1 = tmp2;
+        tmp2 = tmp1->next;
+        if (tmp != NULL) {
+            list_del(tmp);
+            q_release_element(list_entry(tmp, element_t, list));
+            tmp = NULL;
+        }
+        if (tmp2 == head)
+            break;
     }
-    return false;
+    return true;
 }
 
 /*
