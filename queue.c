@@ -130,12 +130,9 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
     if (head && !list_empty(head)) {
         element_t *rem_el = list_entry(head->prev, element_t, list);
-        int char_len = strlen(rem_el->value) < bufsize - 1
-                           ? strlen(rem_el->value)
-                           : bufsize - 1;
         if (sp) {
-            strncpy(sp, rem_el->value, char_len + 1);
-            *(sp + char_len) = '\0';
+            strncpy(sp, rem_el->value, bufsize);
+            *(sp + bufsize - 1) = '\0';
         }
         list_del(&rem_el->list);
         return rem_el;
@@ -203,7 +200,7 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    if (!head || !list_empty(head) || !list_is_singular(head))
+    if (!head || list_empty(head) || list_is_singular(head))
         return false;
 
     struct list_head *tmp1 = head->next;
