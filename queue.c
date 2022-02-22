@@ -270,6 +270,82 @@ void q_reverse(struct list_head *head)
     } while (curr != head);
 }
 
+struct list_head *find_mid(struct list_head *head)
+{
+    struct list_head *forw = head, *back = head->prev;
+    while (forw != back && forw->next != back) {
+        forw = forw->next;
+        back = back->prev;
+    }
+    return back;
+}
+
+struct list_head *merge_sort(struct list_head *new_head)
+{
+    if (new_head == new_head->next)
+        return new_head;
+
+    struct list_head *left = new_head;
+    struct list_head *right = find_mid(new_head);
+
+    if (list_is_singular(left)) {
+        list_del_init(left);
+        list_del_init(right);
+    } else {
+        right->prev->next = left;
+        left->prev->next = right;
+        struct list_head *tp = left->prev;
+        left->prev = right->prev;
+        right->prev = tp;
+    }
+
+    left = merge_sort(left);
+    right = merge_sort(right);
+    left->prev->next = NULL;
+    right->prev->next = NULL;
+
+    for (struct list_head *tmp = NULL; left || right;) {
+        if (!right ||
+            (left &&
+             ((strcmp(list_entry(left, element_t, list)->value,
+                      list_entry(right, element_t, list)->value)) < 0))) {
+            if (!tmp) {
+                tmp = new_head = left;
+                left = left->next;
+                if (left != NULL) {
+                    left->prev = tmp->prev;
+                }
+                INIT_LIST_HEAD(tmp);
+            } else {
+                tmp = left;
+                left = left->next;
+                if (left != NULL) {
+                    left->prev = tmp->prev;
+                } else {
+                }
+                list_add_tail(tmp, new_head);
+            }
+        } else {
+            if (!tmp) {
+                tmp = new_head = right;
+                right = right->next;
+                if (right != NULL) {
+                    right->prev = tmp->prev;
+                }
+                INIT_LIST_HEAD(tmp);
+            } else {
+                tmp = right;
+                right = right->next;
+                if (right != NULL) {
+                    right->prev = tmp->prev;
+                } else {
+                }
+                list_add_tail(tmp, new_head);
+            }
+        }
+    }
+    return new_head;
+}
 /*
  * Sort elements of queue in ascending order
  * No effect if q is NULL or empty. In addition, if q has only one
@@ -277,29 +353,10 @@ void q_reverse(struct list_head *head)
  */
 void q_sort(struct list_head *head)
 {
-    struct list_head less, greater;
-    element_t *pivot, *item, *is = NULL;
-
-    if (!head || list_empty(head) || list_is_singular(head))
+    if (head == NULL)
         return;
-
-    INIT_LIST_HEAD(&less);
-    INIT_LIST_HEAD(&greater);
-
-    pivot = list_first_entry(head, element_t, list);
-    list_del(&pivot->list);
-
-    list_for_each_entry_safe (item, is, head, list) {
-        if (strcmp(item->value, pivot->value) < 0)
-            list_move_tail(&item->list, &less);
-        else
-            list_move(&item->list, &greater);
-    }
-
-    q_sort(&less);
-    q_sort(&greater);
-
-    list_add(&pivot->list, head);
-    list_splice(&less, head);
-    list_splice_tail(&greater, head);
+    struct list_head *new_head = head->next;
+    list_del(head);
+    new_head = merge_sort(new_head);
+    list_add_tail(head, new_head);
 }
