@@ -236,13 +236,14 @@ bool q_delete_dup(struct list_head *head)
  */
 void q_swap(struct list_head *head)
 {
-    if (head && !list_empty(head) && !list_is_singular(head)) {
-        struct list_head *curr = head->next;
-        for (; !(curr == head || curr->next == head); curr = curr->next) {
-            struct list_head *tmp = curr->next;
-            list_del(curr);
-            list_add(curr, tmp);
-        }
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *curr = head->next;
+    for (; !(curr == head || curr->next == head); curr = curr->next) {
+        struct list_head *tmp = curr->next;
+        list_del(curr);
+        list_add(curr, tmp);
     }
     // https://leetcode.com/problems/swap-nodes-in-pairs/
 }
