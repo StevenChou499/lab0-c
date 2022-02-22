@@ -322,7 +322,6 @@ struct list_head *merge_sort(struct list_head *new_head)
                 left = left->next;
                 if (left != NULL) {
                     left->prev = tmp->prev;
-                } else {
                 }
                 list_add_tail(tmp, new_head);
             }
@@ -339,7 +338,6 @@ struct list_head *merge_sort(struct list_head *new_head)
                 right = right->next;
                 if (right != NULL) {
                     right->prev = tmp->prev;
-                } else {
                 }
                 list_add_tail(tmp, new_head);
             }
