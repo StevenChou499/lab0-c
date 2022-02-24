@@ -762,6 +762,72 @@ static bool do_show(int argc, char *argv[])
     return show_queue(0);
 }
 
+static bool do_hello()
+{
+    printf("Hello, World\n");
+    return true;
+}
+
+bool q_shuffle(struct list_head *head)
+{
+    if (head == NULL)
+        return false;
+
+    if (list_empty(head))
+        return true;
+
+    if (list_is_singular(head))
+        return true;
+
+    int n = q_size(head);
+    struct list_head *sorted = head->prev;
+    struct list_head *to_swap = sorted;
+    struct list_head *tmp = NULL;
+    srand(time(NULL));
+    for (; n > 1; n--) {
+        int to_sort = rand() % (n - 1) + 1;
+        for (int i = 0; i < to_sort; i++) {
+            to_swap = to_swap->prev;
+        }
+        tmp = sorted->next;
+        list_del(sorted);
+        list_add_tail(sorted, to_swap);
+        list_del(to_swap);
+        list_add_tail(to_swap, tmp);
+        to_swap = to_swap->prev;
+        sorted = to_swap;
+        to_swap = to_swap->prev;
+        to_swap = sorted;
+    }
+    return true;
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l) {
+        report(3, "Warning: Try to access null queue");
+        return false;
+    }
+    error_check();
+
+    bool ok = false;
+    set_noallocate_mode(true);
+    if (exception_setup(true)) {
+        ok = q_shuffle(l_meta.l);
+    }
+    exception_cancel();
+
+    set_noallocate_mode(false);
+
+    show_queue(3);
+    return ok && !error_check();
+}
+
 static void console_init()
 {
     ADD_COMMAND(new, "                | Create new queue");
@@ -795,6 +861,9 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    add_cmd("hello", do_hello, "                | Print hello message");
+    add_cmd("shuffle", do_shuffle,
+            "                | Shuffle every node on the list");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
