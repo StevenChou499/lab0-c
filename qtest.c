@@ -960,7 +960,6 @@ static bool sanity_check()
     return true;
 }
 
-
 #define BUFSIZE 256
 int main(int argc, char *argv[])
 {
@@ -1017,7 +1016,6 @@ int main(int argc, char *argv[])
     linenoiseSetCompletionCallback(completion);
 
     linenoiseHistorySetMaxLen(HISTORY_LEN);
-    linenoiseHistoryLoad(HISTORY_FILE); /* Load the history at startup */
     set_verblevel(level);
     if (level > 1) {
         set_echo(true);
